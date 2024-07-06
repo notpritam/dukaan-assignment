@@ -6,18 +6,18 @@ const openai = new OpenAI({
 
 const functions = [
   {
-    name: "book",
+    name: "booking",
     description:
       "book reserves a room for a customer and returns the booking ID",
     parameters: {
       type: "object",
       properties: {
         customerName: { type: "string" },
-        roomType: { type: "string", enum: ["single", "double", "suite"] },
+        roomId: { type: "string" },
         checkInDate: { type: "string" },
         checkOutDate: { type: "string" },
       },
-      required: ["customerName", "roomType", "checkInDate", "checkOutDate"],
+      required: ["customerName", "roomId", "checkInDate", "checkOutDate"],
     },
   },
   {

@@ -1,18 +1,108 @@
-// Import any required modules or dependencies
+import Booking from "../models/Booking";
 
-// Define your controller functions
-const createBooking = (req, res) => {
-  // Logic to create a new booking
+const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
+  try {
+    const isRoomAvailable = await Booking.findOne({
+      where: {
+        roomId: roomId,
+        [Op.or]: [
+          {
+            checkInDate: {
+              [Op.between]: [checkInDate, checkOutDate],
+            },
+          },
+          {
+            checkOutDate: {
+              [Op.between]: [checkInDate, checkOutDate],
+            },
+          },
+          {
+            [Op.and]: [
+              {
+                checkInDate: {
+                  [Op.lte]: checkInDate,
+                },
+              },
+              {
+                checkOutDate: {
+                  [Op.gte]: checkOutDate,
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (isRoomAvailable) {
+      throw new Error("Room is not available for the specified date");
+    }
+
+    const booking = await Booking.create({
+      roomId,
+      userId,
+      checkInDate,
+      checkOutDate,
+    });
+    return booking;
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    throw error;
+  }
 };
 
-const getBooking = (req, res) => {
-  // Logic to retrieve a specific booking
+const getAvailableRooms = async (checkInDate, checkOutDate) => {
+  try {
+    // Find all rooms that have overlapping bookings
+    const overlappingBookings = await Booking.findAll({
+      where: {
+        [Op.or]: [
+          {
+            checkInDate: {
+              [Op.between]: [checkInDate, checkOutDate],
+            },
+          },
+          {
+            checkOutDate: {
+              [Op.between]: [checkInDate, checkOutDate],
+            },
+          },
+          {
+            [Op.and]: [
+              {
+                checkInDate: {
+                  [Op.lte]: checkInDate,
+                },
+              },
+              {
+                checkOutDate: {
+                  [Op.gte]: checkOutDate,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      attributes: ["roomId"],
+    });
+
+    // Extract room IDs from overlapping bookings
+    const bookedRoomIds = overlappingBookings.map((booking) => booking.roomId);
+
+    // Find all rooms that are not in the list of bookedRoomIds
+    const availableRooms = await HotelRoom.findAll({
+      where: {
+        id: {
+          [Op.notIn]: bookedRoomIds,
+        },
+      },
+    });
+
+    return availableRooms;
+  } catch (error) {
+    console.error("Error getting available rooms:", error);
+    throw error;
+  }
 };
 
-const updateBooking = (req, res) => {
-  // Logic to update a specific booking
-};
-
-const deleteBooking = (req, res) => {
-  // Logic to delete a specific booking
-};
+export { createBooking, getAvailableRooms };

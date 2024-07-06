@@ -1,6 +1,7 @@
-import { response } from "express";
 import ChatRoom from "../models/Chat/ChatRoom.js";
 import Message from "../models/Chat/Messages.js";
+import { formatMessageforAI } from "../utils/messages.js";
+import { interactWithChatbot } from "./botController.js";
 
 const createChatRoom = async (req, res) => {
   try {
@@ -48,7 +49,7 @@ const createChatRoom = async (req, res) => {
 
 const sendChatMessage = async (req, res) => {
   try {
-    const { chatRoomId, message } = req.body;
+    const { chatRoomId, message, userId } = req.body;
 
     const chatRoom = await ChatRoom.findByPk(chatRoomId);
 
@@ -56,9 +57,27 @@ const sendChatMessage = async (req, res) => {
       return res.status(404).json({ message: "Chat room not found" });
     }
 
-    const chatMessage = await chatRoom.createChatMessage({ message });
+    const chatMessage = await Message.create({
+      roomId: chatRoomId,
+      userId,
+      content: message,
+      isBot: false,
+    });
 
-    res.json({ chatMessage });
+    formatMessageforAI(chatRoomId).then((formattedMessage) => {
+      interactWithChatbot({
+        messages: formattedMessage,
+        userId,
+      }).then((response) => {
+        console.log("response", response);
+        Message.create({
+          roomId: chatRoomId,
+          userId: null,
+          content: response,
+          isBot: true,
+        });
+      });
+    });
   } catch (error) {
     console.error("Error sending chat message:", error);
     res.status(500).json({ message: "Internal Server Error" });
