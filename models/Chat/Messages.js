@@ -41,9 +41,4 @@ const Message = sequelize.define("Message", {
 User.hasMany(Message, { foreignKey: "userId" });
 Message.belongsTo(User, { foreignKey: "userId" });
 
-(async () => {
-  await sequelize.sync({ force: true });
-  // Code here
-})();
-
 export default Message;

@@ -21,9 +21,4 @@ const HotelRoom = sequelize.define("HotelRoom", {
   },
 });
 
-(async () => {
-  await sequelize.sync({ force: true });
-  // Code here
-})();
-
 export default HotelRoom;

@@ -34,9 +34,4 @@ const Booking = sequelize.define("Booking", {
 HotelRoom.hasMany(Booking, { foreignKey: "roomId" });
 Booking.belongsTo(HotelRoom, { foreignKey: "roomId" });
 
-(async () => {
-  await sequelize.sync({ force: true });
-  // Code here
-})();
-
 export default Booking;

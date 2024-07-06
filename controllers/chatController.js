@@ -73,7 +73,7 @@ const sendChatMessage = async (req, res) => {
         Message.create({
           roomId: chatRoomId,
           userId: null,
-          content: response,
+          content: response.content,
           isBot: true,
         });
       });
