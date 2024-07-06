@@ -51,12 +51,11 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPreviousChats } from "@/lib/api";
+import { getAllMessages, getPreviousChats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,16 +74,24 @@ interface ChatRoom {
   userId: string;
 }
 
-export default function Page() {
+interface Message {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  roomId: number;
+  isBot: boolean;
+  userId: string;
+  content: string;
+}
+
+export default function Page({ params }: { params: { id: string } }) {
   const { logout, user } = useHotelStore();
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
-  const router = useRouter();
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  if (!user) {
-    router.push("/auth/login");
-  }
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,6 +105,10 @@ export default function Page() {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
+  }
+
+  if (!user) {
+    router.push("/auth/login");
   }
 
   useEffect(() => {
@@ -114,8 +125,33 @@ export default function Page() {
     });
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const fetchMessages = async () => {
+      try {
+        const data = await getAllMessages({
+          token: user?.token as string,
+          roomId: params.id,
+        });
+
+        if (isMounted) {
+          const message: Message[] = data.chatMessages || [];
+          setMessages(message);
+          console.log("Messages", message);
+        }
+      } catch (error) {
+        console.error("Error fetching messages:", error);
+      }
+    };
+
+    fetchMessages();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
-    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className="grid max-h-screen min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -131,7 +167,7 @@ export default function Page() {
           <div className="flex-1">
             <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
               <Link
-                href="#"
+                href="/chats"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
                 <Home className="h-4 w-4" />
@@ -141,7 +177,12 @@ export default function Page() {
                 <>
                   <Link
                     href={`/chats/${room.id}`}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                      params.id == String(room.id)
+                        ? "text-white bg-slate-600"
+                        : ""
+                    )}
                   >
                     <ShoppingCart className="h-4 w-4" />
                     {room.name}
@@ -153,7 +194,7 @@ export default function Page() {
               ))}
             </nav>
           </div>
-          <div className="mt-auto p-4">
+          {/* <div className="mt-auto p-4">
             <Card x-chunk="dashboard-02-chunk-0">
               <CardHeader className="p-2 pt-0 md:p-4">
                 <CardTitle>Upgrade to Pro</CardTitle>
@@ -168,7 +209,7 @@ export default function Page() {
                 </Button>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
         </div>
       </div>
       <div className="flex flex-col">
@@ -281,20 +322,30 @@ export default function Page() {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <div className="relative flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2">
+        <div className="relative overflow-hidden flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2">
           <Badge variant="outline" className="absolute right-3 top-3">
             Output
           </Badge>
-          <div className="flex flex-col gap-2 h-full justify-end py-8">
-            <div
-              className={cn(
-                "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%] justify-start bg-slate-600 text-white mr-auto"
-              )}
-            >
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">Bot</span>
-                <p className="text-sm">How can I help you today?</p>
-              </div>
+          <div className="flex-1 h-full overflow-clip py-8">
+            <div className="flex flex-col gap-2 h-full ">
+              {messages?.map((message, index) => (
+                <div
+                  key={message.id}
+                  className={cn(
+                    "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%]",
+                    message.isBot
+                      ? "justify-start bg-slate-600 text-white mr-auto"
+                      : "bg-slate-400 justify-end ml-auto"
+                  )}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">
+                      {message.isBot ? "Bot" : "You"}
+                    </span>
+                    <p className="text-sm">{message.content}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
           <Form {...form}>
@@ -306,7 +357,6 @@ export default function Page() {
               <Label htmlFor="message" className="sr-only">
                 Message
               </Label>
-
               <FormField
                 control={form.control}
                 name="messages"
@@ -325,9 +375,6 @@ export default function Page() {
                   </FormItem>
                 )}
               />
-              {/* <Textarea
-                
-              /> */}
               <div className="flex items-center p-3 pt-0">
                 <Tooltip>
                   <TooltipTrigger asChild>
