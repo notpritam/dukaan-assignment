@@ -26,13 +26,12 @@ export default function RootLayout({
         )}
       >
         <TooltipProvider>
-          <div className="flex flex-col h-screen w-full">
-            {/* <Header /> */}
-            <div className="flex flex-col flex-grow  items-center">
-              {children}
-            </div>
+          {/* <div className="flex flex-col h-screen w-full"> */}
+          {/* <Header /> */}
+          {/* <div className="flex flex-col"></div>
             <Toaster />
-          </div>
+          </div> */}
+          <div className="overflow-hidden h-screen w-screen">{children}</div>
         </TooltipProvider>
       </body>
     </html>

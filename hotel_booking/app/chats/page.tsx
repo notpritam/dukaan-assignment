@@ -56,7 +56,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getPreviousChats } from "@/lib/api";
+import { createRoomAndAddMessage, getPreviousChats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,11 +93,53 @@ export default function Page() {
     },
   });
 
+  const sendMessage = async (message: string) => {
+    try {
+      const data = await createRoomAndAddMessage({
+        token: user?.token as string,
+        message,
+      });
+
+      console.log(data);
+
+      router.push(`/chats/${data.message.id}`);
+
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     id: data.message.id,
+      //     content: data.message.content,
+      //     isBot: true,
+      //     createdAt: new Date().toISOString(),
+      //     updatedAt: new Date().toISOString(),
+      //     roomId: Number(params.id),
+      //     userId: user?.token as string,
+      //   },
+      // ]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    console.log(values);
+    sendMessage(values.messages);
+
+    // setMessages((prev) => [
+    //   ...prev,
+    //   {
+    //     id: Math.floor(Math.random() * 1000),
+    //     content: values.messages,
+    //     isBot: false,
+    //     createdAt: new Date().toISOString(),
+    //     updatedAt: new Date().toISOString(),
+    //     roomId: Number(params.id),
+    //     userId: user?.token as string,
+    //   },
+    // ]);
+    form.reset();
   }
 
   useEffect(() => {

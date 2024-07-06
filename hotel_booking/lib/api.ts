@@ -28,4 +28,49 @@ const getAllMessages = async ({
   return data;
 };
 
-export { getPreviousChats, getAllMessages };
+const handleNewMessage = async ({
+  token,
+  roomId,
+  message,
+}: {
+  token: string;
+  roomId: string;
+  message: string;
+}) => {
+  return fetch("http://localhost:3001/chat/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({ chatRoomId: roomId, message }),
+  })
+    .then((response) => response.json())
+    .then((data) => data);
+};
+
+const createRoomAndAddMessage = async ({
+  token,
+  message,
+}: {
+  token: string;
+  message: string;
+}) => {
+  return fetch("http://localhost:3001/chat/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token,
+    },
+    body: JSON.stringify({ message }),
+  })
+    .then((response) => response.json())
+    .then((data) => data);
+};
+
+export {
+  getPreviousChats,
+  getAllMessages,
+  handleNewMessage,
+  createRoomAndAddMessage,
+};

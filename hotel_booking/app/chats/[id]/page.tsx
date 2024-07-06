@@ -55,7 +55,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getAllMessages, getPreviousChats } from "@/lib/api";
+import { getAllMessages, getPreviousChats, handleNewMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -100,11 +100,52 @@ export default function Page({ params }: { params: { id: string } }) {
     },
   });
 
+  const sendMessage = async (message: string) => {
+    try {
+      const data = await handleNewMessage({
+        token: user?.token as string,
+        roomId: params.id,
+        message,
+      });
+
+      console.log(data.message);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: data.message.id,
+          content: data.message.content,
+          isBot: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          roomId: Number(params.id),
+          userId: user?.token as string,
+        },
+      ]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  };
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
-    console.log(values);
+    sendMessage(values.messages);
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Math.floor(Math.random() * 1000),
+        content: values.messages,
+        isBot: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        roomId: Number(params.id),
+        userId: user?.token as string,
+      },
+    ]);
+    form.reset();
   }
 
   if (!user) {
@@ -151,7 +192,7 @@ export default function Page({ params }: { params: { id: string } }) {
   }, []);
 
   return (
-    <div className="grid max-h-screen min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className="grid overflow-hidden relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -212,7 +253,7 @@ export default function Page({ params }: { params: { id: string } }) {
           </div> */}
         </div>
       </div>
-      <div className="flex flex-col">
+      <div className="flex flex-col ">
         <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
@@ -322,36 +363,38 @@ export default function Page({ params }: { params: { id: string } }) {
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <div className="relative overflow-hidden flex h-full min-h-[50vh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2">
-          <Badge variant="outline" className="absolute right-3 top-3">
+        <div className="flex flex-col h-full gap-4 bg-muted/50 p-4 lg:col-span-2">
+          {/* <Badge variant="outline" className="absolute right-3 top-3">
             Output
-          </Badge>
-          <div className="flex-1 h-full overflow-clip py-8">
-            <div className="flex flex-col gap-2 h-full ">
-              {messages?.map((message, index) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%]",
-                    message.isBot
-                      ? "justify-start bg-slate-600 text-white mr-auto"
-                      : "bg-slate-400 justify-end ml-auto"
-                  )}
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {message.isBot ? "Bot" : "You"}
-                    </span>
-                    <p className="text-sm">{message.content}</p>
+          </Badge> */}
+          <div className="h-[80vh]">
+            <div className="h-full">
+              <div className="flex  flex-col justify-end h-full overflow-y-scroll hide-scroll gap-2">
+                {messages?.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%]",
+                      message.isBot
+                        ? "justify-start bg-slate-600 text-white mr-auto"
+                        : "bg-slate-400 justify-end ml-auto"
+                    )}
+                  >
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">
+                        {message.isBot ? "Bot" : "You"}
+                      </span>
+                      <p className="text-sm">{message.content}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="relative overflow-hidden rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
+              className="relative overflow-hidden  rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
               x-chunk="dashboard-03-chunk-1"
             >
               <Label htmlFor="message" className="sr-only">
