@@ -42,12 +42,7 @@ const db = {
   ],
 };
 
-const newBooking = async (
-  customerName,
-  roomType,
-  checkInDate,
-  checkOutDate
-) => {
+const book = async (customerName, roomType, checkInDate, checkOutDate) => {
   const customer = db.customers.find((c) => c.name === customerName);
   if (!customer) {
     throw new Error("Customer not found");
@@ -101,5 +96,3 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
     price: room.price,
   }));
 };
-
-export { newBooking, getBooking, getAvailableRooms };
