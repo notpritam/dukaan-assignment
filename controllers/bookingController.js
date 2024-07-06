@@ -1,4 +1,5 @@
-import Booking from "../models/Booking";
+import Booking from "../models/Booking.js";
+import HotelRoom from "../models/HotelRoom.js";
 
 const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
   try {

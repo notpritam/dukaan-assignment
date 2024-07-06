@@ -1,5 +1,5 @@
-import { openai, functions } from "../config/openai";
-import { createBooking } from "./bookingController";
+import { openai, functions } from "../config/openai.js";
+import { createBooking } from "./bookingController.js";
 
 const interactWithChatbot = async (data) => {
   const { messages, userId } = data;

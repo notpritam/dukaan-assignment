@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
+import HotelRoom from "./HotelRoom.js";
 
 const Booking = sequelize.define("Booking", {
   id: {
@@ -29,6 +30,9 @@ const Booking = sequelize.define("Booking", {
     allowNull: false,
   },
 });
+
+HotelRoom.hasMany(Booking, { foreignKey: "roomId" });
+Booking.belongsTo(HotelRoom, { foreignKey: "roomId" });
 
 (async () => {
   await sequelize.sync({ force: true });
