@@ -38,7 +38,8 @@ const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
     });
 
     if (isRoomAvailable) {
-      throw new Error("Room is not available for the specified date");
+      return "Room is not available for the specified date";
+      // throw new Error("Room is not available for the specified date");
     }
 
     const booking = await Booking.create({

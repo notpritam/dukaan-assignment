@@ -5,10 +5,11 @@ import { interactWithChatbot } from "./botController.js";
 
 const createChatRoom = async (req, res) => {
   try {
-    const { message, userId } = req.body;
+    const { message } = req.body;
+    const userId = req.userId;
     console.log("message", userId, message);
 
-    const roomName = message;
+    const roomName = message.split(" ").slice(0, 3).join(" ");
 
     const chatRoom = await ChatRoom.create({
       name: roomName,
@@ -20,7 +21,15 @@ const createChatRoom = async (req, res) => {
     const mesages = await Message.create({
       roomId: chatRoom.id,
       userId: null,
-      content: "How can I help you today?",
+      content:
+        "You are a chat bot for a hotel booking service whose company name is Crestview Hotel. You can help users book hotel rooms, check availability, and get booking details. You can also provide information about the company and its services. You can also help users with general queries. also return the data in a structured html format.",
+      isBot: true,
+    });
+
+    const mesages1 = await Message.create({
+      roomId: chatRoom.id,
+      userId: null,
+      content: "Hello, how can I help you today?",
       isBot: true,
     });
 
@@ -32,9 +41,24 @@ const createChatRoom = async (req, res) => {
     });
 
     messageList.push(mesages);
+    messageList.push(mesages1);
     messageList.push(mesages2);
 
-    res.json({ chatRoom, response: mesages2 });
+    const formattedMessage = await formatMessageforAI(chatRoom.id);
+
+    const botMessage = await interactWithChatbot({
+      messages: formattedMessage,
+      userId,
+    });
+
+    const newMessage = await Message.create({
+      roomId: chatRoom.id,
+      userId: null,
+      content: botMessage.content,
+      isBot: true,
+    });
+
+    res.json({ message: newMessage, chatRoom });
   } catch (error) {
     console.error("Error creating chat room:", error);
     if (error.name === "SequelizeDatabaseError") {
@@ -67,22 +91,21 @@ const sendChatMessage = async (req, res) => {
       isBot: false,
     });
 
-    formatMessageforAI(chatRoomId).then((formattedMessage) => {
-      interactWithChatbot({
-        messages: formattedMessage,
-        userId,
-      }).then((response) => {
-        console.log("response", response);
-        Message.create({
-          roomId: chatRoomId,
-          userId: null,
-          content: response.content,
-          isBot: true,
-        });
+    const formattedMessage = await formatMessageforAI(chatRoomId);
 
-        res.json({ message: response.content });
-      });
+    const botMessage = await interactWithChatbot({
+      messages: formattedMessage,
+      userId,
     });
+
+    const newMessage = await Message.create({
+      roomId: chatRoomId,
+      userId: null,
+      content: botMessage.content,
+      isBot: true,
+    });
+
+    res.json({ message: newMessage });
   } catch (error) {
     console.error("Error sending chat message:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -92,8 +115,6 @@ const sendChatMessage = async (req, res) => {
 const getChatMessages = async (req, res) => {
   try {
     const { id } = req.params;
-
-    console.log("id", id);
 
     const chatRoom = await ChatRoom.findByPk(id);
 
@@ -108,7 +129,9 @@ const getChatMessages = async (req, res) => {
       order: [["createdAt", "ASC"]],
     });
 
-    res.json({ chatMessages });
+    res.json({
+      chatMessages: chatMessages.slice(1),
+    });
   } catch (error) {
     console.error("Error getting chat messages:", error);
     res.status(500).json({ message: "Internal Server Error" });

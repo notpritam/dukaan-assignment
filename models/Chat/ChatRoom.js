@@ -18,7 +18,7 @@ const ChatRoom = sequelize.define(
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      unique: true, // Ensures only one user is linked to the chat room
+      unique: false, // Ensures only one user is linked to the chat room
       references: {
         model: "Users",
         key: "id",

@@ -1,6 +1,12 @@
 "use client";
 import Link from "next/link";
-import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
+import {
+  CornerDownLeft,
+  MessageSquareMore,
+  MessagesSquare,
+  Mic,
+  Paperclip,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,6 +66,7 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   messages: z.string().min(5).max(3000),
@@ -148,26 +155,56 @@ export default function Page({ params }: { params: { id: string } }) {
     form.reset();
   }
 
-  if (!user) {
-    router.push("/auth/login");
-  }
-
   useEffect(() => {
-    getPreviousChats(user?.token as string).then((data) => {
-      setRooms(data);
+    let isMounted = true;
 
-      let room: ChatRoom[] = [];
+    const getChats = async () => {
+      try {
+        const data = await getPreviousChats(user?.token as string);
 
-      data.chatRooms?.forEach((item: ChatRoom) => {
-        room.push(item);
-      });
+        if (isMounted) {
+          let room: ChatRoom[] = [];
 
-      setRooms(room);
-    });
-  }, []);
+          data.chatRooms?.forEach((item: ChatRoom) => {
+            room.push(item);
+          });
+
+          setRooms(room);
+        }
+
+        console.log(data);
+      } catch (error: any) {
+        console.error("Error fetching rooms:", error);
+
+        if (error.message && error.response.status) {
+          // Handle specific status codes here
+          switch (error.response.status) {
+            case 401:
+              logout();
+              router.push("/auth/login");
+              toast("Session expired, please login again");
+              break;
+            // Add more cases as needed
+            default:
+              // Handle other status codes
+              toast("An error occurred, please try again later");
+              router.refresh();
+              break;
+          }
+        }
+      }
+    };
+
+    getChats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.token]);
 
   useEffect(() => {
     let isMounted = true;
+
     const fetchMessages = async () => {
       try {
         const data = await getAllMessages({
@@ -180,8 +217,29 @@ export default function Page({ params }: { params: { id: string } }) {
           setMessages(message);
           console.log("Messages", message);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching messages:", error);
+        if (error.message && error.response.status) {
+          // Handle specific status codes here
+          switch (error.response.status) {
+            case 401:
+              logout();
+              router.push("/auth/login");
+              toast("Session expired, please login again");
+              break;
+            case 404:
+              // Handle not found error
+              toast("Room not found");
+              router.push("/chats");
+              break;
+            // Add more cases as needed
+            default:
+              // Handle other status codes
+              toast("An error occurred, please try again later");
+              router.refresh();
+              break;
+          }
+        }
       }
     };
 
@@ -189,7 +247,7 @@ export default function Page({ params }: { params: { id: string } }) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.token, params.id]);
 
   return (
     <div className="grid overflow-hidden relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -211,8 +269,8 @@ export default function Page({ params }: { params: { id: string } }) {
                 href="/chats"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
-                <Home className="h-4 w-4" />
-                Dashboard
+                <MessageSquareMore className="h-4 w-4" />
+                New Chat Support
               </Link>
               {rooms?.map((room) => (
                 <>
@@ -225,7 +283,7 @@ export default function Page({ params }: { params: { id: string } }) {
                         : ""
                     )}
                   >
-                    <ShoppingCart className="h-4 w-4" />
+                    <MessagesSquare className="h-4 w-4" />
                     {room.name}
                     {/* <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
                       6
@@ -375,7 +433,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     key={message.id}
                     className={cn(
                       "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%]",
-                      message.isBot
+                      message?.isBot
                         ? "justify-start bg-slate-600 text-white mr-auto"
                         : "bg-slate-400 justify-end ml-auto"
                     )}

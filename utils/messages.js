@@ -12,7 +12,7 @@ const formatMessageforAI = async (roomId) => {
   const formattedMessages = messages.map((message, index) => {
     return {
       role: index === 0 ? "system" : message.isBot ? "assistant" : "user",
-      content: message.content,
+      content: message.isBot ? message.content : message.content,
     };
   });
 

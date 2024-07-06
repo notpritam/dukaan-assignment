@@ -1,6 +1,12 @@
 "use client";
 import Link from "next/link";
-import { CornerDownLeft, Mic, Paperclip } from "lucide-react";
+import {
+  CornerDownLeft,
+  MessageSquareMore,
+  MessagesSquare,
+  Mic,
+  Paperclip,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +67,7 @@ import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   messages: z.string().min(5).max(3000),
@@ -82,10 +89,6 @@ export default function Page() {
 
   const router = useRouter();
 
-  if (!user) {
-    router.push("/auth/login");
-  }
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -102,59 +105,63 @@ export default function Page() {
 
       console.log(data);
 
-      router.push(`/chats/${data.message.id}`);
-
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     id: data.message.id,
-      //     content: data.message.content,
-      //     isBot: true,
-      //     createdAt: new Date().toISOString(),
-      //     updatedAt: new Date().toISOString(),
-      //     roomId: Number(params.id),
-      //     userId: user?.token as string,
-      //   },
-      // ]);
+      router.push(`/chats/${data.chatRoom.id}`);
     } catch (error) {
       console.error("Error sending message:", error);
     }
   };
 
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
     sendMessage(values.messages);
-
-    // setMessages((prev) => [
-    //   ...prev,
-    //   {
-    //     id: Math.floor(Math.random() * 1000),
-    //     content: values.messages,
-    //     isBot: false,
-    //     createdAt: new Date().toISOString(),
-    //     updatedAt: new Date().toISOString(),
-    //     roomId: Number(params.id),
-    //     userId: user?.token as string,
-    //   },
-    // ]);
     form.reset();
   }
 
   useEffect(() => {
-    getPreviousChats(user?.token as string).then((data) => {
-      setRooms(data);
+    let isMounted = true;
 
-      let room: ChatRoom[] = [];
+    const getChats = async () => {
+      try {
+        const data = await getPreviousChats(user?.token as string);
 
-      data.chatRooms?.forEach((item: ChatRoom) => {
-        room.push(item);
-      });
+        if (isMounted) {
+          let room: ChatRoom[] = [];
 
-      setRooms(room);
-    });
-  }, []);
+          data.chatRooms?.forEach((item: ChatRoom) => {
+            room.push(item);
+          });
+
+          setRooms(room);
+        }
+
+        console.log(data);
+      } catch (error: any) {
+        console.error("Error fetching rooms:", error);
+
+        if (error.message && error.response.status) {
+          // Handle specific status codes here
+          switch (error.response.status) {
+            case 401:
+              logout();
+              router.push("/auth/login");
+              toast("Session expired, please login again");
+              break;
+            // Add more cases as needed
+            default:
+              // Handle other status codes
+              toast("An error occurred, please try again later");
+              router.refresh();
+              break;
+          }
+        }
+      }
+    };
+
+    getChats();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.token]);
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -176,8 +183,8 @@ export default function Page() {
                 href="#"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
               >
-                <Home className="h-4 w-4" />
-                Dashboard
+                <MessageSquareMore className="h-4 w-4" />
+                New Chat Support
               </Link>
               {rooms?.map((room) => (
                 <>
@@ -185,7 +192,7 @@ export default function Page() {
                     href={`/chats/${room.id}`}
                     className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                   >
-                    <ShoppingCart className="h-4 w-4" />
+                    <MessagesSquare className="h-4 w-4" />
                     {room.name}
                     {/* <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
                       6
@@ -335,7 +342,7 @@ export default function Page() {
             >
               <div className="flex flex-col">
                 <span className="text-sm font-medium">Bot</span>
-                <p className="text-sm">How can I help you today?</p>
+                <p className="text-sm">Hello, how can I help you today?</p>
               </div>
             </div>
           </div>
