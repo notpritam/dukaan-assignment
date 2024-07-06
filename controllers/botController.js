@@ -1,12 +1,14 @@
 import { openai, functions } from "../config/openai.js";
-import { createBooking } from "./bookingController.js";
+import {
+  createBooking,
+  getAvailableRooms,
+  getBookingDetails,
+} from "./bookingController.js";
 
-const interactWithChatbot = async (data) => {
-  const { messages, userId } = data;
-
+const interactWithChatbot = async ({ messages, userId }) => {
   while (true) {
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages,
       functions: functions,
     });
@@ -48,8 +50,8 @@ async function callFunction({ function_call, userId }) {
       );
 
     case "getBooking":
-      //   return await getBooking(args["bookingId"]);
-      return "getBooking";
+      return await getBookingDetails(args["bookingId"]);
+    //   return "getBooking";
 
     case "getAvailableRooms":
       return await getAvailableRooms(args["checkInDate"], args["checkOutDate"]);

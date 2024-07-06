@@ -1,7 +1,9 @@
+import { Op } from "sequelize";
 import Booking from "../models/Booking.js";
 import HotelRoom from "../models/HotelRoom.js";
 
 const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
+  console.log("createBooking", roomId, userId, checkInDate, checkOutDate);
   try {
     const isRoomAvailable = await Booking.findOne({
       where: {
@@ -85,6 +87,7 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
         ],
       },
       attributes: ["roomId"],
+      limit: 10,
     });
 
     // Extract room IDs from overlapping bookings
@@ -97,6 +100,7 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
           [Op.notIn]: bookedRoomIds,
         },
       },
+      limit: 10,
     });
 
     return availableRooms;
@@ -106,4 +110,18 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
   }
 };
 
-export { createBooking, getAvailableRooms };
+const getBookingDetails = async (bookingId) => {
+  try {
+    const booking = await Booking.findByPk(bookingId);
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    return booking;
+  } catch (error) {
+    console.error("Error getting booking details:", error);
+    throw error;
+  }
+};
+
+export { createBooking, getAvailableRooms, getBookingDetails };

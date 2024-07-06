@@ -15,6 +15,10 @@ function verifyToken(req, res, next) {
     }
 
     req.userId = decoded.userId;
+    if (!req.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     next();
   });
 }

@@ -7,6 +7,8 @@ const secret = "test";
 const userLogin = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("got here");
+
   if (!email || !password) {
     return res
       .status(400)
@@ -38,6 +40,7 @@ const userLogin = async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        username: user.username,
       },
     });
   } catch (error) {

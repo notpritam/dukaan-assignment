@@ -49,7 +49,10 @@ const createChatRoom = async (req, res) => {
 
 const sendChatMessage = async (req, res) => {
   try {
-    const { chatRoomId, message, userId } = req.body;
+    const { chatRoomId, message } = req.body;
+    const userId = req.userId;
+
+    console.log("chatRoomId", chatRoomId, "message", message, "userId", userId);
 
     const chatRoom = await ChatRoom.findByPk(chatRoomId);
 
@@ -76,6 +79,8 @@ const sendChatMessage = async (req, res) => {
           content: response.content,
           isBot: true,
         });
+
+        res.json({ message: response.content });
       });
     });
   } catch (error) {
@@ -86,15 +91,22 @@ const sendChatMessage = async (req, res) => {
 
 const getChatMessages = async (req, res) => {
   try {
-    const { chatRoomId } = req.params;
+    const { id } = req.params;
 
-    const chatRoom = await ChatRoom.findByPk(chatRoomId);
+    console.log("id", id);
+
+    const chatRoom = await ChatRoom.findByPk(id);
 
     if (!chatRoom) {
       return res.status(404).json({ message: "Chat room not found" });
     }
 
-    const chatMessages = await chatRoom.getChatMessages();
+    const chatMessages = await Message.findAll({
+      where: {
+        roomId: id,
+      },
+      order: [["createdAt", "ASC"]],
+    });
 
     res.json({ chatMessages });
   } catch (error) {
@@ -103,4 +115,20 @@ const getChatMessages = async (req, res) => {
   }
 };
 
-export { createChatRoom, sendChatMessage, getChatMessages };
+const getAllRooms = async (req, res) => {
+  try {
+    const chatRooms = await ChatRoom.findAll({
+      where: {
+        userId: req.userId,
+      },
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.json({ chatRooms });
+  } catch (error) {
+    console.error("Error getting chat rooms:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export { createChatRoom, sendChatMessage, getChatMessages, getAllRooms };
