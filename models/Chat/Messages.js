@@ -1,5 +1,5 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../config/db.js";
+import sequelize from "../../config/db.js";
 import User from "../User.js";
 
 const Message = sequelize.define("Message", {
@@ -37,6 +37,9 @@ const Message = sequelize.define("Message", {
     defaultValue: false, // Default to false for user messages
   },
 });
+
+User.hasMany(Message, { foreignKey: "userId" });
+Message.belongsTo(User, { foreignKey: "userId" });
 
 (async () => {
   await sequelize.sync({ force: true });
