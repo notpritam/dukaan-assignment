@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../config/db";
-import User from "../User";
+import sequelize from "../config/db.js";
+import User from "../User.js";
 
 const Message = sequelize.define("Message", {
   // Model attributes are defined here

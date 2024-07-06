@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
-import sequelize from "../config/db";
+import sequelize from "../config/db.js";
 
-const HotelRoom = sequelize.define("HotelRoom", {
+const Booking = sequelize.define("Booking", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -35,4 +35,4 @@ const HotelRoom = sequelize.define("HotelRoom", {
   // Code here
 })();
 
-export default HotelRoom;
+export default Booking;
