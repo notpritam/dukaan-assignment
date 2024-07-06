@@ -1,6 +1,6 @@
-import { openai, functions } from "./config/openai";
-const express = require("express");
-const axios = require("axios");
+import express from "express";
+import axios from "axios";
+import sequelize from "./config/db.js";
 
 const app = express();
 const port = 3000;
@@ -33,43 +33,12 @@ app.post("/messages", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
-
-async function main() {
-  const messagesResponse = await axios.get("https://api.example.com/messages");
-  const messages = messagesResponse.data;
-  console.log(messages);
-
-  while (true) {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages,
-      functions: functions,
-    });
-
-    const message = completion.choices[0].message;
-    messages.push(message);
-    console.log(message);
-
-    // If there is no function call, we're done and can exit this loop
-    if (!message.function_call) {
-      return;
-    }
-
-    // If there is a function call, we generate a new message with the role 'function'.
-    const result = await callFunction(message.function_call);
-    const newMessage = {
-      role: "function",
-      name: message.function_call.name,
-      content: JSON.stringify(result),
-    };
-    messages.push(newMessage);
-
-    console.log(newMessage);
-    console.log();
-  }
+try {
+  await sequelize.authenticate();
+  app.listen(port, () => {
+    console.log("Connection has been established successfully.");
+  });
+  console.log("Connection has been established successfully.");
+} catch (error) {
+  console.error("Unable to connect to the database:", error);
 }
-
-main();
