@@ -1,44 +1,26 @@
 import express from "express";
-import axios from "axios";
-import sequelize from "./config/db.js";
+import bodyParser from "body-parser";
+import sequelize from "./config/db";
+import { router as chatBotRoutes } from "./routes/chatBotRoutes";
+import { router as authRoutes } from "./routes/authRoutes";
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.use(bodyParser.json());
 
-app.get("/messages", async (req, res) => {
-  try {
-    const response = await axios.get("https://api.example.com/messages");
-    const messages = response.data;
-    res.json(messages);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to fetch messages" });
-  }
-});
+// Routes
+app.use("/chat", chatBotRoutes);
+app.use("/auth", authRoutes);
 
-app.post("/messages", async (req, res) => {
-  try {
-    const { role, content } = req.body;
-    const response = await axios.post("https://api.example.com/messages", {
-      role,
-      content,
+// Start server
+sequelize
+  .sync()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
     });
-    const message = response.data;
-    res.json(message);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to send message" });
-  }
-});
-
-try {
-  await sequelize.authenticate();
-  app.listen(port, () => {
-    console.log("Connection has been established successfully.");
+  })
+  .catch((error) => {
+    console.error("Unable to connect to the database:", error);
   });
-  console.log("Connection has been established successfully.");
-} catch (error) {
-  console.error("Unable to connect to the database:", error);
-}

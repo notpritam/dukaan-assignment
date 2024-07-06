@@ -1,8 +1,10 @@
 import express from "express";
-import { interactWithChatbot } from "../controllers/botController";
+
 const router = express.Router();
 
-// Chatbot interaction route
-router.post("/interact", interactWithChatbot);
+// Routes
 
-module.exports = router;
+router.post("/rooms", createRoom);
+router.post("/messages", sendChatMessage);
+
+export default router;
