@@ -26,7 +26,7 @@ export default function RootLayout({
         )}
       >
         <TooltipProvider>
-          <div className="overflow-hidden h-screen w-screen">{children}</div>
+          <div className="overflow-hidden  h-screen w-screen">{children}</div>
           <Toaster />
         </TooltipProvider>
       </body>

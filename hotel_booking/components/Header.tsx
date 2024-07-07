@@ -11,10 +11,10 @@ const Header = () => {
   const { user } = useHotelStore();
 
   return (
-    <header className="w-full flex h-14 items-center gap-4 justify-between border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-      <Link href="#" className="flex items-center gap-4 text-lg font-semibold">
-        <Image src="/logo.png" alt="Acme Inc" width={32} height={32} />
-        <span className="">Crestview Hotel</span>
+    <header className="w-full flex h-14 items-center gap-4 justify-between border-b  px-4 lg:h-[60px] lg:px-6">
+      <Link href="/" className="flex items-center gap-4 text-lg font-semibold">
+        <Image src="/logo.png" alt="Acme Inc" width={24} height={24} />
+        <span>Crestview Hotel</span>
       </Link>
 
       {/* <form className="">

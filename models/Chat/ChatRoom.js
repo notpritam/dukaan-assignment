@@ -13,7 +13,7 @@ const ChatRoom = sequelize.define(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
+      unique: false,
     },
     userId: {
       type: DataTypes.INTEGER,

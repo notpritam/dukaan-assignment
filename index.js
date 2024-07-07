@@ -47,11 +47,25 @@ sequelize
 
 //     const roomsToGenerate = 1000;
 //     const rooms = [];
+//     const roomNames = [
+//       "Deluxe Room",
+//       "Suite Room",
+//       "Premium Room",
+//       "Executive Room",
+//       "Standard Room",
+//       "Family Room",
+//       "Single Room",
+//       "Double Room",
+//       "Twin Room",
+//       "King Room",
+//     ];
 
 //     for (let i = 1; i <= roomsToGenerate; i++) {
+//       const randomRoomName =
+//         roomNames[Math.floor(Math.random() * roomNames.length)];
 //       rooms.push({
-//         name: `Room ${i}`,
-//         description: `Description for Room ${i}`,
+//         name: `${randomRoomName} ${i}`,
+//         description: `Description for ${randomRoomName} ${i}`,
 //         price: Math.floor(Math.random() * 500) + 50, // Random price between 50 and 550
 //       });
 //     }

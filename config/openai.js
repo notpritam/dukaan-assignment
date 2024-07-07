@@ -33,6 +33,11 @@ const functions = [
     },
   },
   {
+    name: "getBookingByUserId",
+    description:
+      "getBookingByUserId retrieves the booking details based on the userId",
+  },
+  {
     name: "getAvailableRooms",
     description:
       "getAvailableRooms returns a list of available rooms based on the check-in and check-out dates",

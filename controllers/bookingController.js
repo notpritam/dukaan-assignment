@@ -5,42 +5,50 @@ import HotelRoom from "../models/HotelRoom.js";
 const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
   console.log("createBooking", roomId, userId, checkInDate, checkOutDate);
   try {
-    const isRoomAvailable = await Booking.findOne({
-      where: {
-        roomId: roomId,
-        [Op.or]: [
-          {
-            checkInDate: {
-              [Op.between]: [checkInDate, checkOutDate],
-            },
-          },
-          {
-            checkOutDate: {
-              [Op.between]: [checkInDate, checkOutDate],
-            },
-          },
-          {
-            [Op.and]: [
-              {
-                checkInDate: {
-                  [Op.lte]: checkInDate,
-                },
-              },
-              {
-                checkOutDate: {
-                  [Op.gte]: checkOutDate,
-                },
-              },
-            ],
-          },
-        ],
-      },
-    });
+    // const isRoomAvailable = await Booking.findOne({
+    //   where: {
+    //     roomId: roomId,
+    //     [Op.or]: [
+    //       {
+    //         checkInDate: {
+    //           [Op.between]: [checkInDate, checkOutDate],
+    //         },
+    //       },
+    //       {
+    //         checkOutDate: {
+    //           [Op.between]: [checkInDate, checkOutDate],
+    //         },
+    //       },
+    //       {
+    //         [Op.and]: [
+    //           {
+    //             checkInDate: {
+    //               [Op.lte]: checkInDate,
+    //             },
+    //           },
+    //           {
+    //             checkOutDate: {
+    //               [Op.gte]: checkOutDate,
+    //             },
+    //           },
+    //         ],
+    //       },
+    //     ],
+    //   },
+    // });
 
-    if (isRoomAvailable) {
-      return "Room is not available for the specified date";
-      // throw new Error("Room is not available for the specified date");
-    }
+    // if (isRoomAvailable) {
+    //   return "Room is not available for the specified date";
+    //   // throw new Error("Room is not available for the specified date");
+    // }
+
+    console.log(
+      "Booking is available",
+      roomId,
+      userId,
+      checkInDate,
+      checkOutDate
+    );
 
     const booking = await Booking.create({
       roomId,
@@ -50,8 +58,7 @@ const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
     });
     return booking;
   } catch (error) {
-    console.error("Error creating booking:", error);
-    throw error;
+    return "Error Creating Booking" + error;
   }
 };
 
@@ -107,22 +114,51 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
     return availableRooms;
   } catch (error) {
     console.error("Error getting available rooms:", error);
-    throw error;
+    return error;
   }
 };
 
-const getBookingDetails = async (bookingId) => {
+const getBookingDetails = async ({ bookingId, userId }) => {
   try {
     const booking = await Booking.findByPk(bookingId);
     if (!booking) {
-      throw new Error("Booking not found");
+      return "Booking not found";
+      // throw new Error("Booking not found");
+    }
+
+    if (booking.userId !== userId) {
+      return "Unathorized";
+      // throw new Error("Unauthorized");
     }
 
     return booking;
   } catch (error) {
     console.error("Error getting booking details:", error);
-    throw error;
+    return error;
   }
 };
 
-export { createBooking, getAvailableRooms, getBookingDetails };
+const getBookingByUserId = async (userId) => {
+  try {
+    const bookings = await Booking.findAll({
+      attributes: ["id", "checkInDate", "checkOutDate"],
+      where: {
+        userId,
+      },
+      order: [["createdAt", "DESC"]],
+      limit: 5,
+    });
+
+    return bookings;
+  } catch (error) {
+    console.error("Error getting booking by userId:", error);
+    return error;
+  }
+};
+
+export {
+  createBooking,
+  getAvailableRooms,
+  getBookingDetails,
+  getBookingByUserId,
+};

@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import {
+  CircuitBoardIcon,
   CornerDownLeft,
+  LoaderCircle,
   MessageSquareMore,
   MessagesSquare,
   Mic,
@@ -60,7 +62,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -97,6 +99,12 @@ export default function Page({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(false);
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -282,12 +290,22 @@ export default function Page({ params }: { params: { id: string } }) {
     };
   }, [user]);
 
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, form]);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/auth/login");
+    router.refresh();
+  };
+
   return (
-    <div className="grid  relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
-      <div className="hidden border-r bg-muted/40 md:block">
-        <div className="flex h-full max-h-screen flex-col gap-2">
+    <div className="grid  relative h-screen max-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+      <div className="hidden border-r  md:block">
+        <div className="flex h-full max-h-screen flex-col bg-black gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-            <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Link href="/" className="flex  items-center gap-2 font-semibold">
               <Image src="/logo.png" alt="Acme Inc" width={24} height={24} />
               <span className="">Crestview Hotel</span>
             </Link>
@@ -312,7 +330,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                       params.id == String(room.id)
-                        ? "text-white bg-slate-600"
+                        ? "text-white bg-primary/40 hover:text-white"
                         : ""
                     )}
                   >
@@ -328,8 +346,8 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
         </div>
       </div>
-      <div className="flex flex-col ">
-        <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+      <div className="flex flex-col  ">
+        <header className="fixed lg:relative bg-black  top-0 flex h-14 items-center gap-4 border-b  px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -342,69 +360,41 @@ export default function Page({ params }: { params: { id: string } }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
-              <nav className="grid gap-2 text-lg font-medium">
+              <Link
+                href="/"
+                className="flex items-center  gap-2 text-lg font-semibold"
+              >
+                <Image src="/logo.png" alt="Acme Inc" width={24} height={24} />
+                <span>Crestview Hotel</span>
+              </Link>
+              <nav className="grid gap-2 hide-scroll text-sm font-medium overflow-scroll">
                 <Link
-                  href="#"
-                  className="flex items-center gap-2 text-lg font-semibold"
+                  href="/chats"
+                  className="flex mx-[-0.65rem] px-3 py-2 mt-4 rounded-sm   gap-4 items-center"
                 >
-                  <Package2 className="h-6 w-6" />
-                  <span className="sr-only">Acme Inc</span>
+                  <MessageSquareMore className="h-4 w-4 " />
+                  New Chat Support
                 </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Home className="h-5 w-5" />
-                  Dashboard
-                </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  Orders
-                  <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-                    6
-                  </Badge>
-                </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Package className="h-5 w-5" />
-                  Products
-                </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <Users className="h-5 w-5" />
-                  Customers
-                </Link>
-                <Link
-                  href="#"
-                  className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-                >
-                  <LineChart className="h-5 w-5" />
-                  Analytics
-                </Link>
+                {rooms?.map((room) => (
+                  <>
+                    <Link
+                      href={`/chats/${room.id}`}
+                      className={cn(
+                        "mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-primary transition-all",
+                        room.id == Number(params.id)
+                          ? "text-white bg-primary/40 hover:text-white"
+                          : ""
+                      )}
+                    >
+                      <MessagesSquare className="h-4 w-4" />
+                      {room.name}
+                      {/* <Badge className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
+                      6
+                    </Badge> */}
+                    </Link>
+                  </>
+                ))}
               </nav>
-              <div className="mt-auto">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Upgrade to Pro</CardTitle>
-                    <CardDescription>
-                      Unlock all features and get unlimited access to our
-                      support team.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button size="sm" className="w-full">
-                      Upgrade
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
@@ -432,27 +422,27 @@ export default function Page({ params }: { params: { id: string } }) {
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <span onClick={logout}>Logout</span>
+              <DropdownMenuItem onClick={() => handleLogout()}>
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <div className="flex flex-col h-full gap-4 bg-muted/50 p-4 lg:col-span-2">
+        <div className="flex flex-col h-full w-full justify-end gap-4 p-4 lg:col-span-2">
           {/* <Badge variant="outline" className="absolute right-3 top-3">
             Output
           </Badge> */}
-          <div className="h-[80vh]">
-            <div className="h-full">
-              <div className="flex  flex-col justify-end h-full overflow-y-scroll hide-scroll gap-2">
+          <div className="max-h-[80vh] overflow-clip overflow-y-scroll hide-scroll ">
+            <div className="mt-auto w-full">
+              <div className="flex  flex-col justify-end  gap-2">
                 {messages?.map((message) => (
                   <div
                     key={message.id}
                     className={cn(
-                      "flex gap-2 p-3 rounded-lg shadow-md max-w-[50%]",
+                      "flex gap-2 p-3 rounded-lg shadow-md max-w-[80%] lg:max-w-[50%] ",
                       message?.isBot
-                        ? "justify-start bg-slate-600 text-white mr-auto"
-                        : "bg-slate-400 justify-end ml-auto"
+                        ? "justify-start bg-primary/40 text-white mr-auto"
+                        : "bg-primary justify-end ml-auto"
                     )}
                   >
                     <div className="flex flex-col">
@@ -466,6 +456,7 @@ export default function Page({ params }: { params: { id: string } }) {
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
             </div>
           </div>
@@ -527,8 +518,14 @@ export default function Page({ params }: { params: { id: string } }) {
                   size="sm"
                   className="ml-auto gap-1.5"
                 >
-                  Send Message
-                  <CornerDownLeft className="size-3.5" />
+                  {loading ? (
+                    <LoaderCircle className=" animate-spin" />
+                  ) : (
+                    <>
+                      Send Message
+                      <CornerDownLeft className="size-3.5" />
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

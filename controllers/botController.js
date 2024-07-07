@@ -2,6 +2,7 @@ import { openai, functions } from "../config/openai.js";
 import {
   createBooking,
   getAvailableRooms,
+  getBookingByUserId,
   getBookingDetails,
 } from "./bookingController.js";
 
@@ -55,6 +56,9 @@ async function callFunction({ function_call, userId }) {
 
     case "getAvailableRooms":
       return await getAvailableRooms(args["checkInDate"], args["checkOutDate"]);
+
+    case "getBookingByUserId":
+      return await getBookingByUserId(userId);
     //   return "getAvailableRooms";
 
     default:

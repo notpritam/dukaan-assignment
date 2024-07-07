@@ -2,7 +2,7 @@ import { Sequelize } from "sequelize";
 
 const sequelize = new Sequelize({
   dialect: "sqlite",
-  storage: "./hotelDB.sqlite",
+  storage: "./hotelsDB.sqlite",
 });
 sequelize
   .sync()

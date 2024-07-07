@@ -12,7 +12,11 @@ const formatMessageforAI = async (roomId) => {
   const formattedMessages = messages.map((message, index) => {
     return {
       role: index === 0 ? "system" : message.isBot ? "assistant" : "user",
-      content: message.isBot ? message.content : message.content,
+      content: message.isBot
+        ? message.content
+        : message.content +
+          `Do not give me any information about procedures and service features that are not mentioned in the PROVIDED CONTEXT.
+          Today Date is ${Date.now()}.`,
     };
   });
 
