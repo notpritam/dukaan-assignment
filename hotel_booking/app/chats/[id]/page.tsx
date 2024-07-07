@@ -108,14 +108,17 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const sendMessage = async (message: string) => {
     try {
-      const response = await fetch("http://localhost:3001/chat/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: user?.token as string,
-        },
-        body: JSON.stringify({ chatRoomId: params.id, message }),
-      });
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/chat/messages",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: user?.token as string,
+          },
+          body: JSON.stringify({ chatRoomId: params.id, message }),
+        }
+      );
 
       const data = await response.json();
 
@@ -177,13 +180,16 @@ export default function Page({ params }: { params: { id: string } }) {
     const getChats = async () => {
       try {
         if (isMounted) {
-          const response = await fetch("http://localhost:3001/chat", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: user?.token as string,
-            },
-          });
+          const response = await fetch(
+            process.env.NEXT_PUBLIC_API_URL + "/chat",
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: user?.token as string,
+              },
+            }
+          );
 
           const data = await response.json();
 
@@ -233,7 +239,7 @@ export default function Page({ params }: { params: { id: string } }) {
       try {
         if (isMounted) {
           const response = await fetch(
-            `http://localhost:3001/chat/${params.id}`,
+            process.env.NEXT_PUBLIC_API_URL + `/chat/${params.id}`,
             {
               method: "GET",
               headers: {

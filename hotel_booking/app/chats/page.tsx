@@ -102,7 +102,7 @@ export default function Page() {
 
   const sendMessage = async (message: string) => {
     try {
-      const response = await fetch("http://localhost:3001/chat/", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/chat/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,13 +157,16 @@ export default function Page() {
 
     const getChats = async () => {
       try {
-        const response = await fetch("http://localhost:3001/chat", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: user?.token as string,
-          },
-        });
+        const response = await fetch(
+          process.env.NEXT_PUBLIC_API_URL + "/chat",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: user?.token as string,
+            },
+          }
+        );
 
         console.log(response);
         const data = await response.json();
