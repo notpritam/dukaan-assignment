@@ -74,8 +74,6 @@ function Page({ params }: { params: { id: string } }) {
     email: string;
     password: string;
   }) => {
-    console.log(email, password, "this is data");
-
     try {
       const response = await fetch("http://localhost:3001/auth/login", {
         method: "POST",
@@ -101,6 +99,7 @@ function Page({ params }: { params: { id: string } }) {
       } else {
         console.log(data, "this is data");
         toast(data.message);
+
         // return data;
       }
     } catch (e) {

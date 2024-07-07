@@ -1,13 +1,11 @@
 const getPreviousChats = async (token: string) => {
-  return fetch("http://localhost:3001/chat", {
+  return await fetch("http://localhost:3001/chat", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
       Authorization: token,
     },
-  })
-    .then((response) => response.json())
-    .then((data) => data);
+  });
 };
 
 const getAllMessages = async ({
@@ -24,8 +22,7 @@ const getAllMessages = async ({
       Authorization: token,
     },
   });
-  const data = await response.json();
-  return data;
+  return response;
 };
 
 const handleNewMessage = async ({
@@ -37,16 +34,14 @@ const handleNewMessage = async ({
   roomId: string;
   message: string;
 }) => {
-  return fetch("http://localhost:3001/chat/messages", {
+  return await fetch("http://localhost:3001/chat/messages", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: token,
     },
     body: JSON.stringify({ chatRoomId: roomId, message }),
-  })
-    .then((response) => response.json())
-    .then((data) => data);
+  });
 };
 
 const createRoomAndAddMessage = async ({
@@ -56,16 +51,14 @@ const createRoomAndAddMessage = async ({
   token: string;
   message: string;
 }) => {
-  return fetch("http://localhost:3001/chat/", {
+  return await fetch("http://localhost:3001/chat/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: token,
     },
     body: JSON.stringify({ message }),
-  })
-    .then((response) => response.json())
-    .then((data) => data);
+  });
 };
 
 export {

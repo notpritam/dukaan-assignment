@@ -5,14 +5,16 @@ import Link from "next/link";
 import { Package2, Search } from "lucide-react";
 import { Input } from "./ui/input";
 import { useHotelStore } from "@/lib/store/store";
+import Image from "next/image";
 
 const Header = () => {
   const { user } = useHotelStore();
+
   return (
     <header className="w-full flex h-14 items-center gap-4 justify-between border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
-      <Link href="#" className="flex items-center gap-2 text-lg font-semibold">
-        <Package2 className="h-6 w-6" />
-        <span className="sr-only">Acme Inc</span>
+      <Link href="#" className="flex items-center gap-4 text-lg font-semibold">
+        <Image src="/logo.png" alt="Acme Inc" width={32} height={32} />
+        <span className="">Crestview Hotel</span>
       </Link>
 
       {/* <form className="">

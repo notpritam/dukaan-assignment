@@ -67,6 +67,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Image from "next/image";
 
 const formSchema = z.object({
   messages: z.string().min(5).max(3000),
@@ -94,6 +95,8 @@ interface Message {
 export default function Page({ params }: { params: { id: string } }) {
   const { logout, user } = useHotelStore();
 
+  const [loading, setLoading] = useState(false);
+
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -109,12 +112,27 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const sendMessage = async (message: string) => {
     try {
-      const data = await handleNewMessage({
+      const response = await handleNewMessage({
         token: user?.token as string,
         roomId: params.id,
         message,
       });
 
+      if (!response.ok) {
+        toast("Error sending message");
+
+        if (response.status === 401) {
+          logout();
+          router.push("/auth/login");
+          toast("Session expired, please login again");
+          return;
+        } else if (response.status === 404) {
+          router.push("/chats");
+          toast("Room not found");
+          return;
+        }
+      }
+      const data = await response.json();
       console.log(data.message);
 
       setMessages((prev) => [
@@ -132,12 +150,12 @@ export default function Page({ params }: { params: { id: string } }) {
     } catch (error) {
       console.error("Error sending message:", error);
     }
+    setLoading(false);
   };
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
+    setLoading(true);
     sendMessage(values.messages);
 
     setMessages((prev) => [
@@ -160,7 +178,15 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const getChats = async () => {
       try {
-        const data = await getPreviousChats(user?.token as string);
+        const response = await getPreviousChats(user?.token as string);
+
+        if (!response.ok) {
+          //   router.push("/auth/login");
+          toast("Session expired, please login again");
+          throw new Error("Error fetching rooms");
+        }
+
+        const data = await response.json();
 
         if (isMounted) {
           let room: ChatRoom[] = [];
@@ -176,7 +202,7 @@ export default function Page({ params }: { params: { id: string } }) {
       } catch (error: any) {
         console.error("Error fetching rooms:", error);
 
-        if (error.message && error.response.status) {
+        if (error.message && error.response?.status) {
           // Handle specific status codes here
           switch (error.response.status) {
             case 401:
@@ -200,17 +226,32 @@ export default function Page({ params }: { params: { id: string } }) {
     return () => {
       isMounted = false;
     };
-  }, [user?.token]);
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchMessages = async () => {
       try {
-        const data = await getAllMessages({
+        const response = await getAllMessages({
           token: user?.token as string,
           roomId: params.id,
         });
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            router.push("/chats");
+            toast("Room not found");
+            return;
+          } else if (response.status === 401) {
+            logout();
+            router.push("/auth/login");
+            toast("Session expired, please login again");
+            return;
+          }
+        }
+
+        const data = await response.json();
 
         if (isMounted) {
           const message: Message[] = data.chatMessages || [];
@@ -219,7 +260,7 @@ export default function Page({ params }: { params: { id: string } }) {
         }
       } catch (error: any) {
         console.error("Error fetching messages:", error);
-        if (error.message && error.response.status) {
+        if (error.message && error.response?.status) {
           // Handle specific status codes here
           switch (error.response.status) {
             case 401:
@@ -247,7 +288,7 @@ export default function Page({ params }: { params: { id: string } }) {
     return () => {
       isMounted = false;
     };
-  }, [user?.token, params.id]);
+  }, [user, params.id]);
 
   return (
     <div className="grid overflow-hidden relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -255,8 +296,8 @@ export default function Page({ params }: { params: { id: string } }) {
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Package2 className="h-6 w-6" />
-              <span className="">Acme Inc</span>
+              <Image src="/logo.png" alt="Acme Inc" width={24} height={24} />
+              <span className="">Crestview Hotel</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
@@ -442,7 +483,10 @@ export default function Page({ params }: { params: { id: string } }) {
                       <span className="text-sm font-medium">
                         {message.isBot ? "Bot" : "You"}
                       </span>
-                      <p className="text-sm">{message.content}</p>
+                      <div
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{ __html: message.content }}
+                      ></div>
                     </div>
                   </div>
                 ))}
@@ -451,7 +495,13 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={
+                loading
+                  ? (e) => {
+                      e.preventDefault();
+                    }
+                  : form.handleSubmit(onSubmit)
+              }
               className="relative overflow-hidden  rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
               x-chunk="dashboard-03-chunk-1"
             >
@@ -495,7 +545,12 @@ export default function Page({ params }: { params: { id: string } }) {
                   </TooltipTrigger>
                   <TooltipContent side="top">Use Microphone</TooltipContent>
                 </Tooltip>
-                <Button type="submit" size="sm" className="ml-auto gap-1.5">
+                <Button
+                  disabled={loading}
+                  type="submit"
+                  size="sm"
+                  className="ml-auto gap-1.5"
+                >
                   Send Message
                   <CornerDownLeft className="size-3.5" />
                 </Button>

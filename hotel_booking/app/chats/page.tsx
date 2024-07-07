@@ -68,6 +68,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Image from "next/image";
 
 const formSchema = z.object({
   messages: z.string().min(5).max(3000),
@@ -84,6 +85,7 @@ interface ChatRoom {
 
 export default function Page() {
   const { logout, user } = useHotelStore();
+  const [loading, setLoading] = useState(false);
 
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
 
@@ -98,16 +100,30 @@ export default function Page() {
 
   const sendMessage = async (message: string) => {
     try {
-      const data = await createRoomAndAddMessage({
+      const response = await createRoomAndAddMessage({
         token: user?.token as string,
         message,
       });
 
-      console.log(data);
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout();
+          router.push("/auth/login");
+          toast("Session expired, please login again");
+          return;
+        } else {
+          toast("An error occurred, please try again later");
+          router.refresh();
+          return;
+        }
+      }
+
+      const data = await response.json();
 
       router.push(`/chats/${data.chatRoom.id}`);
-    } catch (error) {
-      console.error("Error sending message:", error);
+    } catch (error: any) {
+      console.error("Error sending message:", error.message);
+      toast(error.message || "An error occurred, please try again later");
     }
   };
 
@@ -121,7 +137,22 @@ export default function Page() {
 
     const getChats = async () => {
       try {
-        const data = await getPreviousChats(user?.token as string);
+        const response = await getPreviousChats(user?.token as string);
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            logout();
+            router.push("/auth/login");
+            toast("Session expired, please login again");
+            return;
+          } else {
+            toast("An error occurred, please try again later");
+            router.refresh();
+            return;
+          }
+        }
+
+        const data = await response.json();
 
         if (isMounted) {
           let room: ChatRoom[] = [];
@@ -161,7 +192,7 @@ export default function Page() {
     return () => {
       isMounted = false;
     };
-  }, [user?.token]);
+  }, [user]);
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -169,8 +200,8 @@ export default function Page() {
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
             <Link href="/" className="flex items-center gap-2 font-semibold">
-              <Package2 className="h-6 w-6" />
-              <span className="">Acme Inc</span>
+              <Image src="/logo.png" alt="Acme Inc" width={24} height={24} />
+              <span className="">Crestview Hotel</span>
             </Link>
             <Button variant="outline" size="icon" className="ml-auto h-8 w-8">
               <Bell className="h-4 w-4" />
@@ -201,22 +232,6 @@ export default function Page() {
                 </>
               ))}
             </nav>
-          </div>
-          <div className="mt-auto p-4">
-            <Card x-chunk="dashboard-02-chunk-0">
-              <CardHeader className="p-2 pt-0 md:p-4">
-                <CardTitle>Upgrade to Pro</CardTitle>
-                <CardDescription>
-                  Unlock all features and get unlimited access to our support
-                  team.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                <Button size="sm" className="w-full">
-                  Upgrade
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
@@ -348,7 +363,13 @@ export default function Page() {
           </div>
           <Form {...form}>
             <form
-              onSubmit={form.handleSubmit(onSubmit)}
+              onSubmit={
+                loading
+                  ? (e) => {
+                      e.preventDefault();
+                    }
+                  : form.handleSubmit(onSubmit)
+              }
               className="relative overflow-hidden rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
               x-chunk="dashboard-03-chunk-1"
             >
@@ -396,7 +417,12 @@ export default function Page() {
                   </TooltipTrigger>
                   <TooltipContent side="top">Use Microphone</TooltipContent>
                 </Tooltip>
-                <Button type="submit" size="sm" className="ml-auto gap-1.5">
+                <Button
+                  disabled={loading}
+                  type="submit"
+                  size="sm"
+                  className="ml-auto gap-1.5"
+                >
                   Send Message
                   <CornerDownLeft className="size-3.5" />
                 </Button>
