@@ -61,7 +61,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getAllMessages, getPreviousChats, handleNewMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -112,28 +111,30 @@ export default function Page({ params }: { params: { id: string } }) {
 
   const sendMessage = async (message: string) => {
     try {
-      const response = await handleNewMessage({
-        token: user?.token as string,
-        roomId: params.id,
-        message,
+      const response = await fetch("http://localhost:3001/chat/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: user?.token as string,
+        },
+        body: JSON.stringify({ chatRoomId: params.id, message }),
       });
 
-      if (!response.ok) {
-        toast("Error sending message");
+      const data = await response.json();
 
-        if (response.status === 401) {
+      if (!response.ok) {
+        if (data?.message === "Failed to authenticate token") {
           logout();
+          toast(data.message || "An error occurred, please try again later");
           router.push("/auth/login");
-          toast("Session expired, please login again");
+          router.refresh();
           return;
-        } else if (response.status === 404) {
-          router.push("/chats");
-          toast("Room not found");
+        } else {
+          toast(data.message || "An error occurred, please try again later");
+          router.refresh();
           return;
         }
       }
-      const data = await response.json();
-      console.log(data.message);
 
       setMessages((prev) => [
         ...prev,
@@ -178,17 +179,34 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const getChats = async () => {
       try {
-        const response = await getPreviousChats(user?.token as string);
-
-        if (!response.ok) {
-          //   router.push("/auth/login");
-          toast("Session expired, please login again");
-          throw new Error("Error fetching rooms");
-        }
-
-        const data = await response.json();
-
         if (isMounted) {
+          const response = await fetch("http://localhost:3001/chat", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: user?.token as string,
+            },
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            if (data?.message === "Failed to authenticate token") {
+              logout();
+              toast(
+                data.message || "An error occurred, please try again later"
+              );
+              router.push("/auth/login");
+              router.refresh();
+              return;
+            } else {
+              toast(
+                data.message || "An error occurred, please try again later"
+              );
+              router.refresh();
+              return;
+            }
+          }
           let room: ChatRoom[] = [];
 
           data.chatRooms?.forEach((item: ChatRoom) => {
@@ -197,31 +215,14 @@ export default function Page({ params }: { params: { id: string } }) {
 
           setRooms(room);
         }
-
-        console.log(data);
       } catch (error: any) {
-        console.error("Error fetching rooms:", error);
-
-        if (error.message && error.response?.status) {
-          // Handle specific status codes here
-          switch (error.response.status) {
-            case 401:
-              logout();
-              router.push("/auth/login");
-              toast("Session expired, please login again");
-              break;
-            // Add more cases as needed
-            default:
-              // Handle other status codes
-              toast("An error occurred, please try again later");
-              router.refresh();
-              break;
-          }
-        }
+        toast("An error occurred, please try again later");
       }
     };
 
-    getChats();
+    if (isMounted && user?.token) {
+      getChats();
+    }
 
     return () => {
       isMounted = false;
@@ -233,65 +234,56 @@ export default function Page({ params }: { params: { id: string } }) {
 
     const fetchMessages = async () => {
       try {
-        const response = await getAllMessages({
-          token: user?.token as string,
-          roomId: params.id,
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            router.push("/chats");
-            toast("Room not found");
-            return;
-          } else if (response.status === 401) {
-            logout();
-            router.push("/auth/login");
-            toast("Session expired, please login again");
-            return;
-          }
-        }
-
-        const data = await response.json();
-
         if (isMounted) {
+          const response = await fetch(
+            `http://localhost:3001/chat/${params.id}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: user?.token as string,
+              },
+            }
+          );
+          const data = await response.json();
+
+          if (!response.ok) {
+            if (data?.message === "Failed to authenticate token") {
+              logout();
+              toast(
+                data.message || "An error occurred, please try again later"
+              );
+              router.push("/auth/login");
+              router.refresh();
+              return;
+            } else {
+              toast(
+                data.message || "An error occurred, please try again later"
+              );
+              router.refresh();
+              return;
+            }
+          }
           const message: Message[] = data.chatMessages || [];
           setMessages(message);
           console.log("Messages", message);
         }
       } catch (error: any) {
         console.error("Error fetching messages:", error);
-        if (error.message && error.response?.status) {
-          // Handle specific status codes here
-          switch (error.response.status) {
-            case 401:
-              logout();
-              router.push("/auth/login");
-              toast("Session expired, please login again");
-              break;
-            case 404:
-              // Handle not found error
-              toast("Room not found");
-              router.push("/chats");
-              break;
-            // Add more cases as needed
-            default:
-              // Handle other status codes
-              toast("An error occurred, please try again later");
-              router.refresh();
-              break;
-          }
-        }
+        toast("An error occurred, please try again later");
       }
     };
 
-    fetchMessages();
+    if (isMounted && user?.token) {
+      fetchMessages();
+    }
     return () => {
       isMounted = false;
     };
-  }, [user, params.id]);
+  }, [user]);
 
   return (
-    <div className="grid overflow-hidden relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
+    <div className="grid  relative min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <div className="hidden border-r bg-muted/40 md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
@@ -334,22 +326,6 @@ export default function Page({ params }: { params: { id: string } }) {
               ))}
             </nav>
           </div>
-          {/* <div className="mt-auto p-4">
-            <Card x-chunk="dashboard-02-chunk-0">
-              <CardHeader className="p-2 pt-0 md:p-4">
-                <CardTitle>Upgrade to Pro</CardTitle>
-                <CardDescription>
-                  Unlock all features and get unlimited access to our support
-                  team.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-2 pt-0 md:p-4 md:pt-0">
-                <Button size="sm" className="w-full">
-                  Upgrade
-                </Button>
-              </CardContent>
-            </Card>
-          </div> */}
         </div>
       </div>
       <div className="flex flex-col ">

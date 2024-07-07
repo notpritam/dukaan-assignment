@@ -62,7 +62,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useHotelStore } from "@/lib/store/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createRoomAndAddMessage, getPreviousChats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -100,27 +99,30 @@ export default function Page() {
 
   const sendMessage = async (message: string) => {
     try {
-      const response = await createRoomAndAddMessage({
-        token: user?.token as string,
-        message,
+      const response = await fetch("http://localhost:3001/chat/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: user?.token as string,
+        },
+        body: JSON.stringify({ message }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        if (response.status === 401) {
+        if (data?.message === "Failed to authenticate token") {
           logout();
+          toast(data.message || "An error occurred, please try again later");
           router.push("/auth/login");
-          toast("Session expired, please login again");
+          router.refresh();
           return;
         } else {
-          toast("An error occurred, please try again later");
+          toast(data.message || "An error occurred, please try again later");
           router.refresh();
           return;
         }
       }
-
-      const data = await response.json();
-
-      router.push(`/chats/${data.chatRoom.id}`);
     } catch (error: any) {
       console.error("Error sending message:", error.message);
       toast(error.message || "An error occurred, please try again later");
@@ -137,22 +139,30 @@ export default function Page() {
 
     const getChats = async () => {
       try {
-        const response = await getPreviousChats(user?.token as string);
+        const response = await fetch("http://localhost:3001/chat", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: user?.token as string,
+          },
+        });
+
+        console.log(response);
+        const data = await response.json();
 
         if (!response.ok) {
-          if (response.status === 401) {
+          if (data?.message === "Failed to authenticate token") {
             logout();
+            toast(data.message || "An error occurred, please try again later");
             router.push("/auth/login");
-            toast("Session expired, please login again");
+            router.refresh();
             return;
           } else {
-            toast("An error occurred, please try again later");
+            toast(data.message || "An error occurred, please try again later");
             router.refresh();
             return;
           }
         }
-
-        const data = await response.json();
 
         if (isMounted) {
           let room: ChatRoom[] = [];
@@ -171,7 +181,7 @@ export default function Page() {
         if (error.message && error.response.status) {
           // Handle specific status codes here
           switch (error.response.status) {
-            case 401:
+            case 403:
               logout();
               router.push("/auth/login");
               toast("Session expired, please login again");
@@ -193,6 +203,12 @@ export default function Page() {
       isMounted = false;
     };
   }, [user]);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/auth/login");
+    toast("You have been logged out");
+  };
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
@@ -340,7 +356,7 @@ export default function Page() {
               <DropdownMenuItem>Support</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <span onClick={logout}>Logout</span>
+                <span onClick={() => handleLogout()}>Logout</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
