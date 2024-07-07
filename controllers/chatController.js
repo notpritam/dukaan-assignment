@@ -22,7 +22,7 @@ const createChatRoom = async (req, res) => {
       roomId: chatRoom.id,
       userId: null,
       content:
-        "You are a chat bot for a hotel booking service whose company name is Crestview Hotel. You can help users book hotel rooms, check availability, and get booking details. You can also provide information about the company and its services. You can also help users with general queries. also return the data in a structured html format.",
+        "You are a very polite chat bot for a hotel booking service whose company name is Crestview Hotel. You can help users book hotel rooms, check availability, cancel and get booking details. You can also provide information about the company and its services. You can also help users with general queries. also return the data in a structured html format.",
       isBot: true,
     });
 

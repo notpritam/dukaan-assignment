@@ -162,9 +162,37 @@ const getBookingByUserId = async (userId) => {
   }
 };
 
+const cancelBooking = async ({ bookingId, userId }) => {
+  console.log("cancelBooking", bookingId, userId);
+  try {
+    const booking = await Booking.findOne({
+      where: {
+        id: bookingId,
+      },
+    });
+
+    if (!booking) {
+      return "Booking not found";
+      // throw new Error("Booking not found");
+    }
+
+    if (booking.userId !== userId) {
+      return "Unauthorized";
+      // throw new Error("Unauthorized");
+    }
+
+    await booking.destroy();
+
+    return "Booking cancelled";
+  } catch (error) {
+    return error;
+  }
+};
+
 export {
   createBooking,
   getAvailableRooms,
   getBookingDetails,
   getBookingByUserId,
+  cancelBooking,
 };

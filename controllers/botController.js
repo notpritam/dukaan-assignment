@@ -1,5 +1,6 @@
 import { openai, functions } from "../config/openai.js";
 import {
+  cancelBooking,
   createBooking,
   getAvailableRooms,
   getBookingByUserId,
@@ -63,6 +64,12 @@ async function callFunction({ function_call, userId }) {
     case "getBookingByUserId":
       return await getBookingByUserId(userId);
     //   return "getAvailableRooms";
+
+    case "cancelBooking":
+      return cancelBooking({
+        bookingId: args["bookingId"],
+        userId,
+      });
 
     default:
       throw new Error("No function found");

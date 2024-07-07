@@ -50,6 +50,17 @@ const functions = [
       required: ["checkInDate", "checkOutDate"],
     },
   },
+  {
+    name: "cancelBooking",
+    description: "cancelBooking cancels the booking based on the booking ID",
+    parameters: {
+      type: "object",
+      properties: {
+        bookingId: { type: "string" },
+      },
+      required: ["bookingId"],
+    },
+  },
 ];
 
 export { openai, functions };
