@@ -2,46 +2,11 @@ import { Op } from "sequelize";
 import Booking from "../models/Booking.js";
 import HotelRoom from "../models/HotelRoom.js";
 
+import { Resend } from "resend";
+
 const createBooking = async (roomId, userId, checkInDate, checkOutDate) => {
   console.log("createBooking", roomId, userId, checkInDate, checkOutDate);
   try {
-    // const isRoomAvailable = await Booking.findOne({
-    //   where: {
-    //     roomId: roomId,
-    //     [Op.or]: [
-    //       {
-    //         checkInDate: {
-    //           [Op.between]: [checkInDate, checkOutDate],
-    //         },
-    //       },
-    //       {
-    //         checkOutDate: {
-    //           [Op.between]: [checkInDate, checkOutDate],
-    //         },
-    //       },
-    //       {
-    //         [Op.and]: [
-    //           {
-    //             checkInDate: {
-    //               [Op.lte]: checkInDate,
-    //             },
-    //           },
-    //           {
-    //             checkOutDate: {
-    //               [Op.gte]: checkOutDate,
-    //             },
-    //           },
-    //         ],
-    //       },
-    //     ],
-    //   },
-    // });
-
-    // if (isRoomAvailable) {
-    //   return "Room is not available for the specified date";
-    //   // throw new Error("Room is not available for the specified date");
-    // }
-
     console.log(
       "Booking is available",
       roomId,
@@ -189,10 +154,47 @@ const cancelBooking = async ({ bookingId, userId }) => {
   }
 };
 
+const resend = new Resend("re_123456789");
+
+const sendBookingConfirmation = async ({ userId }) => {
+  const booking = await Booking.findOne({
+    where: {
+      userId,
+    },
+    order: [["createdAt", "DESC"]],
+  });
+  console.log("booking", booking);
+
+  return booking;
+
+  // await resend.emails.send({
+  //   from: " <onboarding@resend.dev>",
+  //   to: ["delivered@resend.dev"],
+  //   subject: "hello world",
+  //   text: "it works!",
+  //   attachments: [
+  //     {
+  //       filename: "invoice.pdf",
+  //       content: invoiceBuffer,
+  //     },
+  //   ],
+  //   headers: {
+  //     "X-Entity-Ref-ID": "123456789",
+  //   },
+  //   tags: [
+  //     {
+  //       name: "category",
+  //       value: "confirm_email",
+  //     },
+  //   ],
+  // });
+};
+
 export {
   createBooking,
   getAvailableRooms,
   getBookingDetails,
   getBookingByUserId,
   cancelBooking,
+  sendBookingConfirmation,
 };

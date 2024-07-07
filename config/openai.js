@@ -63,6 +63,11 @@ const functions = [
       required: ["bookingId"],
     },
   },
+  {
+    name: "sendConfirmationEmail",
+    description:
+      "sendConfirmationEmail sends a confirmation email to the customer based on the booking ID",
+  },
 ];
 
 export { openai, functions };

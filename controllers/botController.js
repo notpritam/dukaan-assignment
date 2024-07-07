@@ -5,6 +5,7 @@ import {
   getAvailableRooms,
   getBookingByUserId,
   getBookingDetails,
+  sendBookingConfirmation,
 } from "./bookingController.js";
 
 const interactWithChatbot = async ({ messages, userId }) => {
@@ -68,6 +69,11 @@ async function callFunction({ function_call, userId }) {
     case "cancelBooking":
       return cancelBooking({
         bookingId: args["bookingId"],
+        userId,
+      });
+
+    case "sendConfirmationEmail":
+      return sendBookingConfirmation({
         userId,
       });
 
