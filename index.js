@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: "https://chatbot-98h5.onrender.com",
+    origin: "https://chatbot-mu-khaki.vercel.app",
   })
 );
 app.use(bodyParser.json());
