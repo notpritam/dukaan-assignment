@@ -349,7 +349,7 @@ export default function Page({ params }: { params: { id: string } }) {
         </div>
       </div>
       <div className="flex flex-col  ">
-        <header className="fixed lg:relative bg-black  top-0 flex h-14 items-center gap-4 border-b  px-4 lg:h-[60px] lg:px-6">
+        <header className="fixed lg:relative bg-black w-full  top-0 flex h-14 items-center gap-4 border-b  px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -400,7 +400,7 @@ export default function Page({ params }: { params: { id: string } }) {
             </SheetContent>
           </Sheet>
           <div className="w-full flex-1">
-            <form>
+            {/* <form>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -409,7 +409,7 @@ export default function Page({ params }: { params: { id: string } }) {
                   className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
                 />
               </div>
-            </form>
+            </form> */}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
