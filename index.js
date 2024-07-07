@@ -1,4 +1,4 @@
-import * as dotenv from "dotenv";
+import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import bodyParser from "body-parser";
@@ -18,10 +18,12 @@ const PORT = process.env.PORT || 3001;
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://chatbot-98h5.onrender.com",
   })
 );
 app.use(bodyParser.json());
+
+console.log("this is api" + process.env.OPENAI_API_KEY);
 
 // Routes
 app.use("/chat", chatBotRoutes);
