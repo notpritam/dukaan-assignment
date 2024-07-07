@@ -164,30 +164,23 @@ const sendBookingConfirmation = async ({ userId }) => {
     order: [["createdAt", "DESC"]],
   });
   console.log("booking", booking);
+  await resend.emails.send({
+    from: " <onboarding@resend.dev>",
+    to: ["notpritamsharma@gmail.com"],
+    subject: "Booking Confirmation",
+    html: "<h1>it works!</h1>",
+    headers: {
+      "X-Entity-Ref-ID": "123456789",
+    },
+    tags: [
+      {
+        name: "category",
+        value: "confirm_email",
+      },
+    ],
+  });
 
   return booking;
-
-  // await resend.emails.send({
-  //   from: " <onboarding@resend.dev>",
-  //   to: ["delivered@resend.dev"],
-  //   subject: "hello world",
-  //   text: "it works!",
-  //   attachments: [
-  //     {
-  //       filename: "invoice.pdf",
-  //       content: invoiceBuffer,
-  //     },
-  //   ],
-  //   headers: {
-  //     "X-Entity-Ref-ID": "123456789",
-  //   },
-  //   tags: [
-  //     {
-  //       name: "category",
-  //       value: "confirm_email",
-  //     },
-  //   ],
-  // });
 };
 
 export {
