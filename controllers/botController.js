@@ -51,7 +51,10 @@ async function callFunction({ function_call, userId }) {
       );
 
     case "getBooking":
-      return await getBookingDetails(args["bookingId"]);
+      return await getBookingDetails({
+        bookingId: args["bookingId"],
+        userId,
+      });
     //   return "getBooking";
 
     case "getAvailableRooms":

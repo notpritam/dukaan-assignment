@@ -120,7 +120,13 @@ const getAvailableRooms = async (checkInDate, checkOutDate) => {
 
 const getBookingDetails = async ({ bookingId, userId }) => {
   try {
-    const booking = await Booking.findByPk(bookingId);
+    const booking = await Booking.findOne({
+      where: {
+        id: bookingId,
+      },
+    });
+
+    console.log("Booking Details", booking, bookingId);
     if (!booking) {
       return "Booking not found";
       // throw new Error("Booking not found");

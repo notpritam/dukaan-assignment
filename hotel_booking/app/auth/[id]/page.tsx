@@ -133,7 +133,8 @@ function Page({ params }: { params: { id: string } }) {
           lastName: data.user.lastName,
           username: data.user.username,
         });
-        router.push("/chats");
+        toast("Account created successfully");
+        router.push("/auth/login");
       } else {
         console.log(data, "this is data");
         toast(data.message);

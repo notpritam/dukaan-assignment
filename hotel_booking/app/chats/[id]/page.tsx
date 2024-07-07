@@ -71,7 +71,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 const formSchema = z.object({
-  messages: z.string().min(5).max(3000),
+  messages: z.string().min(2).max(3000),
 });
 
 interface ChatRoom {
@@ -277,8 +277,10 @@ export default function Page({ params }: { params: { id: string } }) {
           console.log("Messages", message);
         }
       } catch (error: any) {
-        console.error("Error fetching messages:", error);
-        toast("An error occurred, please try again later");
+        console.error("Error fetching rooms:", error);
+
+        toast(error.message || "An error occurred, please try again later");
+        router.refresh();
       }
     };
 

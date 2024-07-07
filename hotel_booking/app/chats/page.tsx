@@ -70,9 +70,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import Image from "next/image";
+import { log } from "console";
 
 const formSchema = z.object({
-  messages: z.string().min(5).max(3000),
+  messages: z.string().min(2).max(3000),
 });
 
 interface ChatRoom {
@@ -119,6 +120,16 @@ export default function Page() {
           router.push("/auth/login");
           router.refresh();
           return;
+        } else if (data?.message === "User not found") {
+          toast(data.message || "An error occurred, please try again later");
+          logout();
+          router.push("/auth/login");
+          return;
+        } else if (data?.message === "Unauthorized") {
+          toast(data.message || "An error occurred, please try again later");
+          logout();
+          router.push("/auth/login");
+          return;
         } else {
           toast(data.message || "An error occurred, please try again later");
           router.refresh();
@@ -164,6 +175,11 @@ export default function Page() {
             router.push("/auth/login");
             router.refresh();
             return;
+          } else if (data?.message === "User not found") {
+            toast(data.message || "An error occurred, please try again later");
+            logout();
+            router.push("/auth/login");
+            return;
           } else {
             toast(data.message || "An error occurred, please try again later");
             router.refresh();
@@ -185,22 +201,8 @@ export default function Page() {
       } catch (error: any) {
         console.error("Error fetching rooms:", error);
 
-        if (error.message && error.response.status) {
-          // Handle specific status codes here
-          switch (error.response.status) {
-            case 403:
-              logout();
-              router.push("/auth/login");
-              toast("Session expired, please login again");
-              break;
-            // Add more cases as needed
-            default:
-              // Handle other status codes
-              toast("An error occurred, please try again later");
-              router.refresh();
-              break;
-          }
-        }
+        toast(error.message || "An error occurred, please try again later");
+        router.refresh();
       }
     };
 
@@ -262,7 +264,7 @@ export default function Page() {
         </div>
       </div>
       <div className="flex flex-col">
-        <header className="fixed flex top-0 lg:flex bg-black z-10 w-full h-14 items-center gap-4 border-b  px-4 lg:h-[60px] lg:px-6">
+        <header className="fixed lg:relative flex top-0 lg:flex bg-black z-10 w-full h-14 items-center gap-4 border-b  px-4 lg:h-[60px] lg:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button
@@ -446,7 +448,6 @@ export default function Page() {
                       <CornerDownLeft className="size-3.5" />
                     </>
                   )}
-                  <CornerDownLeft className="size-3.5" />
                 </Button>
               </div>
             </form>
